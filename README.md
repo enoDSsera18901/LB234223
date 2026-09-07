@@ -1,5 +1,7 @@
 # LastBarrel
 
+> **Repository role — evidence kernel, not the product release surface.** The canonical LastBarrel application and release surface is `enoDSsera18901/Defx2450505`. This repository exists to develop small, independently testable Python integrity primitives for point-in-time STEO acquisition, vintage selection and conservative workbook parsing. A capability landing here is **not** a shipped LastBarrel product capability until it is explicitly adopted and verified in the canonical application. Dashboard, scenario-workflow and deployment work belongs in the canonical repository; cross-repository work should name its intended integration target so the two implementations do not silently diverge.
+
 LastBarrel is an evidence-first physical-oil intelligence project. The current release foundation establishes point-in-time controls for public EIA Short-Term Energy Outlook (STEO) vintages, official archived-workbook acquisition with exact-byte lineage, and a conservative dependency-free XLSX structural reader.
 
 ## Evidence contract
@@ -104,4 +106,4 @@ Tests use clearly labelled synthetic OOXML fixtures and synthetic observations t
 
 ## Next milestone
 
-Retain a real archived EIA workbook as integration evidence, inventory its worksheet names and relevant oil-market table cells with the structural reader, then commit a narrow versioned EIA mapping that produces `Observation` records with explicit units and source-cell lineage.
+Retain a real archived EIA workbook as integration evidence, inventory its worksheet names and relevant oil-market table cells with the structural reader, then commit a narrow versioned EIA mapping that produces `Observation` records with explicit units and source-cell lineage. Any kernel control intended for product use should then be explicitly adopted and verified in `enoDSsera18901/Defx2450505` rather than maintained as a parallel product implementation.
