@@ -1,6 +1,6 @@
 # LastBarrel
 
-LastBarrel is an evidence-first physical-oil intelligence project. The current release foundation establishes point-in-time controls for public EIA Short-Term Energy Outlook (STEO) vintages and now includes official archived-workbook acquisition with exact-byte lineage.
+LastBarrel is an evidence-first physical-oil intelligence project. The current release foundation establishes point-in-time controls for public EIA Short-Term Energy Outlook (STEO) vintages, official archived-workbook acquisition with exact-byte lineage, and a conservative dependency-free XLSX structural reader.
 
 ## Evidence contract
 
@@ -49,7 +49,40 @@ The acquisition layer:
 - records retrieval time, byte length, exact source URL, output path, and SHA-256 digest;
 - keeps source acquisition separate from workbook parsing and analytical transformation.
 
-That separation is intentional: a parser should be validated against a real retained workbook layout before any extracted value is presented as observed EIA data.
+## Conservative XLSX structure reader
+
+The parser substrate decodes XLSX/OOXML directly with the Python standard library. It can enumerate worksheets, decode shared strings and inline strings, read numeric/boolean/text cells, preserve formula text and retain exact `sheet!cell` lineage.
+
+It intentionally does **not** infer EIA series IDs, dates, units, or table meaning. A numeric source cell becomes an `Observation` only when the caller supplies an explicit mapping:
+
+```python
+from datetime import date
+from lastbarrel import ObservationCellSpec, parse_observation_cells
+
+parsed = parse_observation_cells(
+    "data/raw/aug26_base.xlsx",
+    [
+        ObservationCellSpec(
+            sheet_name="<verified sheet name>",
+            value_cell="<verified cell>",
+            series_id="<explicit series id>",
+            period=date(2026, 8, 1),
+            unit="<explicit source unit>",
+        )
+    ],
+)
+```
+
+Additional safeguards:
+
+- missing worksheets/cells fail closed;
+- text cells cannot silently become numeric observations;
+- duplicate series-period mappings are rejected;
+- formula-backed cells are rejected unless cached-value use is explicitly opted into;
+- workbook relationship traversal is rejected;
+- compressed/uncompressed OOXML member sizes are bounded to reduce zip-bomb risk.
+
+This structural layer is deliberately separate from an EIA-specific table map. The latter should only be committed after a retained real STEO workbook has been inspected and its exact sheet/cell/unit layout verified.
 
 ## Local verification
 
@@ -59,11 +92,11 @@ Requires Python 3.11 or newer and no runtime dependencies.
 python -m unittest discover -s tests -v
 ```
 
-Tests use clearly labelled synthetic workbook bytes and synthetic observations to exercise integrity controls. No synthetic number or fake workbook is presented as real EIA market data.
+Tests use clearly labelled synthetic OOXML fixtures and synthetic observations to exercise integrity controls. No synthetic number or fake workbook is presented as real EIA market data.
 
 ## Current limitations
 
-- Official workbook downloading and byte-level lineage are implemented, but the archived XLSX table parser is not yet implemented.
+- Official workbook downloading, byte-level lineage and structural XLSX decoding are implemented; a verified EIA-specific sheet/cell mapping is not yet committed.
 - No retained real EIA workbook is committed to the repository yet.
 - No landed-cost model is included yet.
 - Backtest outcome data and forecast scoring remain caller responsibilities.
@@ -71,4 +104,4 @@ Tests use clearly labelled synthetic workbook bytes and synthetic observations t
 
 ## Next milestone
 
-Retain a real archived EIA workbook as integration evidence, inspect its exact table/schema layout, and build a parser that produces `Observation` records while preserving source sheet/cell lineage and rejecting silent unit/schema changes.
+Retain a real archived EIA workbook as integration evidence, inventory its worksheet names and relevant oil-market table cells with the structural reader, then commit a narrow versioned EIA mapping that produces `Observation` records with explicit units and source-cell lineage.
